@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/TonmoyTalukder/go-students-api/internal/config"
+	"github.com/TonmoyTalukder/go-students-api/internal/http/handlers/student"
 )
 
 func main() {
@@ -24,24 +25,25 @@ func main() {
 	// setup router
 	router := http.NewServeMux()
 
-	router.HandleFunc("GET /", func(w http.ResponseWriter,  r *http.Request){
-		w.Write([]byte("Welcome to student api..."))
+	router.HandleFunc("GET /api/", func(w http.ResponseWriter,  r *http.Request){
+		w.Write([]byte("Welcome to the server..."))
 	})
 
+	router.HandleFunc("POST /api/students", student.New())
+
 	// setup server
-	server := http.Server {
-		Addr: cfg.Addr,
+	server := http.Server{
+		Addr:    cfg.Addr,
 		Handler: router,
 	}
 
 	slog.Info("Server started at", slog.String("address", cfg.Addr))
-	// fmt.Printf("Server started at %s", cfg.Addr)
 
 	done := make(chan os.Signal, 1)
 
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	go func(){
+	go func() {
 		err := server.ListenAndServe()
 
 		if err != nil {
@@ -53,7 +55,7 @@ func main() {
 
 	slog.Info("Shutting down the server.")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
