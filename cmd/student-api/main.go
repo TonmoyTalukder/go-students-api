@@ -12,6 +12,7 @@ import (
 
 	"github.com/TonmoyTalukder/go-students-api/internal/config"
 	"github.com/TonmoyTalukder/go-students-api/internal/http/handlers/student"
+	"github.com/TonmoyTalukder/go-students-api/internal/storage/sqlite"
 )
 
 func main() {
@@ -21,6 +22,12 @@ func main() {
 	// logger if any
 
 	// database set up
+	storage, err := sqlite.New(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Info("Storage initialized", slog.String("env", cfg.Env), slog.String("version", "1.0.0"))
 
 	// setup router
 	router := http.NewServeMux()
@@ -29,7 +36,7 @@ func main() {
 		w.Write([]byte("Welcome to the server..."))
 	})
 
-	router.HandleFunc("POST /api/students", student.New())
+	router.HandleFunc("POST /api/students", student.New(storage))
 
 	// setup server
 	server := http.Server{
