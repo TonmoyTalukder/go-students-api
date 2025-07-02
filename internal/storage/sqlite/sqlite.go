@@ -110,3 +110,43 @@ func (s *Sqlite) GetStudents() ([]types.Student, error) {
 
 	return students, nil
 }
+
+func (s *Sqlite) GetStudentsWithPagination(limit, offset int) ([]types.Student, error) {
+	stmt, err := s.Db.Prepare("SELECT id, name, email, age FROM students LIMIT ? OFFSET ?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var students []types.Student
+	for rows.Next() {
+		var student types.Student
+		if err := rows.Scan(&student.Id, &student.Name, &student.Email, &student.Age); err != nil {
+			return nil, err
+		}
+		students = append(students, student)
+	}
+
+	return students, nil
+}
+
+func (s *Sqlite) CountStudents() (int, error) {
+	stmt, err := s.Db.Prepare("SELECT COUNT(*) FROM students")
+	if err != nil {
+		return 0, err
+	}
+	defer stmt.Close()
+
+	var count int
+	if err := stmt.QueryRow().Scan(&count); err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

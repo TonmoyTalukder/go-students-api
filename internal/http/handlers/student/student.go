@@ -83,14 +83,57 @@ func GetById(storage storage.Storage) http.HandlerFunc {
 
 func GetList(storage storage.Storage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// slog.Info("Getting all students")
+
+		// students, err := storage.GetStudents()
+		// if err != nil {
+		// 	response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to retrieve students", err))
+		// 	return
+		// }
+
+		// response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Students retrieved successfully", students, nil))
+
 		slog.Info("Getting all students")
 
-		students, err := storage.GetStudents()
+		// Get query parameters
+		pageStr := r.URL.Query().Get("page")
+		limitStr := r.URL.Query().Get("limit")
+
+		// Set default values
+		page := 1
+		limit := 10
+
+		if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+			page = p
+		}
+
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+
+		// Calculate offset
+		offset := (page - 1) * limit
+
+		// Fetch students with limit and offset
+		students, err := storage.GetStudentsWithPagination(limit, offset)
 		if err != nil {
 			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to retrieve students", err))
 			return
 		}
 
-		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Students retrieved successfully", students, nil))
+		// Optional: total count for frontend pagination UI
+		total, err := storage.CountStudents()
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to count students", err))
+			return
+		}
+
+		meta := map[string]interface{}{
+			"page":  page,
+			"limit": limit,
+			"total": total,
+		}
+
+		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Students retrieved successfully", students, meta))
 	}
 }
