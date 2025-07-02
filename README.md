@@ -15,7 +15,7 @@ A simple, modular, RESTful API built in Go to manage student records using SQLit
 ✅ Idiomatic, modular Go project structure
 
 ## 📁 Project Structure
-```bash
+```
 .
 ├── cmd/
 │   └── student-api/           # Main application entrypoint
@@ -49,7 +49,7 @@ http_server:
 
 ## 🏁 Getting Started
 #### Prerequisites
-- Go 1.22+
+- Go 1.24.2
 - SQLite (included with Go stdlib via database/sql)
 
 #### Run the Server
@@ -136,7 +136,7 @@ Error:
 The server shuts down cleanly on Ctrl+C or kill signal using a 5-second timeout context.
 
 ## 👨‍💻 Author
-Made with ❤️ by Tonmoy Talukder <br/>
+**Tonmoy Talukder** <br/>
 GitHub: https://github.com/TonmoyTalukder
 
 ## 📄 License
