@@ -8,4 +8,6 @@ type Storage interface {
 	GetStudents() ([]types.Student, error)
 	GetStudentsWithPagination(limit int, offset int) ([]types.Student, error)
 	CountStudents() (int, error)
+	UpdateStudentById(id int64, name string, email string, age int) error
+	DeleteStudentById(id int64) error
 }

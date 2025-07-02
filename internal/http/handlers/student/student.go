@@ -137,3 +137,61 @@ func GetList(storage storage.Storage) http.HandlerFunc {
 		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Students retrieved successfully", students, meta))
 	}
 }
+
+func UpdateById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("Updating a student", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid ID", err))
+			return
+		}
+
+		var student types.Student
+		if err := json.NewDecoder(r.Body).Decode(&student); err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid JSON body", err))
+			return
+		}
+
+		// Update the student in DB
+		err = storage.UpdateStudentById(intId, student.Name, student.Email, student.Age)
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to update student", err))
+			return
+		}
+
+		// Fetch the updated student to return
+		updatedStudent, err := storage.GetStudentById(intId)
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to fetch updated student", err))
+			return
+		}
+
+		slog.Info("Updated a student", slog.String("id", id))
+		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Student updated successfully", updatedStudent, nil))
+	}
+}
+
+func DeleteById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("Deleting a student", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid ID", err))
+			return
+		}
+
+		err = storage.DeleteStudentById(intId)
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to delete student", err))
+			return
+		}
+
+		slog.Info("Deleted a student", slog.String("id", id))
+		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Student deleted successfully", nil, nil))
+	}
+}
