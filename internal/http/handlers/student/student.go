@@ -80,3 +80,17 @@ func GetById(storage storage.Storage) http.HandlerFunc {
 		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Student retrieved successfully", student, nil))
 	}
 }
+
+func GetList(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		slog.Info("Getting all students")
+
+		students, err := storage.GetStudents()
+		if err != nil {
+			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to retrieve students", err))
+			return
+		}
+
+		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Students retrieved successfully", students, nil))
+	}
+}
