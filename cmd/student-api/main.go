@@ -20,6 +20,7 @@ func main() {
 	cfg := config.MustLoad()
 
 	// logger if any
+	slog.Info("Student API: Go REST")
 
 	// database set up
 	storage, err := sqlite.New(cfg)
@@ -37,6 +38,7 @@ func main() {
 	})
 
 	router.HandleFunc("POST /api/students", student.New(storage))
+	router.HandleFunc("GET /api/students/{id}", student.GetById(storage))
 
 	// setup server
 	server := http.Server{

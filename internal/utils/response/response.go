@@ -14,16 +14,44 @@ type Response struct {
 	Error string `json:"error"`
 }
 
+type JsonResponse struct {
+	Status  string      `json:"status"`
+	Code    int         `json:"code"`
+	Message string      `json:"message,omitempty"`
+	Meta    interface{} `json:"meta,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+}
+
 const (
 	StatusOK = "OK"
 	StatusError = "Error"
 )
 
-func WriteJson(w http.ResponseWriter, status int, data interface{}) error{
+func WriteJson(w http.ResponseWriter, status int, payload JsonResponse) error{   // data interface{}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	return json.NewEncoder(w).Encode(data)
+	return json.NewEncoder(w).Encode(payload)
+}
+
+func SuccessResponse(code int, message string, data interface{}, meta interface{}) JsonResponse {
+	return JsonResponse{
+		Status:  StatusOK,
+		Code:    code,
+		Message: message,
+		Data:    data,
+		Meta:    meta,
+	}
+}
+
+func ErrorResponse(code int, message string, err error) JsonResponse {
+	return JsonResponse{
+		Status:  StatusError,
+		Code:    code,
+		Message: message,
+		Error:   err.Error(),
+	}
 }
 
 func GeneralError(err error) Response {
@@ -33,7 +61,7 @@ func GeneralError(err error) Response {
 	}
 }
 
-func ValidationErr(errs validator.ValidationErrors) Response {
+func ValidationErr(errs validator.ValidationErrors) JsonResponse {
 	var errMsgs []string
 
 	for _, err := range errs {
@@ -46,7 +74,7 @@ func ValidationErr(errs validator.ValidationErrors) Response {
 		}
 	}
 
-	return Response{
+	return JsonResponse{
 		Status: StatusError,
 		Error: strings.Join(errMsgs, ", "),
 	}

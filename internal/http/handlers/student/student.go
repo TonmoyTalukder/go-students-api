@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/TonmoyTalukder/go-students-api/internal/storage"
 	"github.com/TonmoyTalukder/go-students-api/internal/types"
@@ -22,12 +23,12 @@ func New(storage storage.Storage) http.HandlerFunc {
 		err := json.NewDecoder(r.Body).Decode(&student)
 
 		if errors.Is(err, io.EOF) {
-			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(fmt.Errorf("empty body"))) // err
+			response.WriteJson(w, http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "empty body", err)) // err
 			return
 		}
 
 		if err != nil {
-			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(err))
+			response.WriteJson(w, http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Bad Request", err))
 			return
 		}
 
@@ -48,12 +49,34 @@ func New(storage storage.Storage) http.HandlerFunc {
 		slog.Info("User created successfully", slog.String("userId", fmt.Sprint(lastId)))
 
 		if errLastId != nil {
-			response.WriteJson(w, http.StatusInternalServerError, errLastId)
+			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusBadRequest, "Error with last id", errLastId))
 			return
 		}
 
-		response.WriteJson(w, http.StatusCreated, map[string]int64{"id": lastId})
+		response.WriteJson(w, http.StatusCreated, response.SuccessResponse(http.StatusOK, "Student created successfully", map[string]int64{"id": lastId}, nil))
 
 		// w.Write([]byte("Welcome to student api..."))
+	}
+}
+
+func GetById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("Getting a student", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			slog.Error("Error getting bad request", slog.Any("error", err))
+			response.WriteJson(w, http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, "Invalid student ID", err))
+			return
+		}
+		student, err := storage.GetStudentById(intId)
+		if err != nil {
+			slog.Error("Error getting user", slog.String("id", id))
+			response.WriteJson(w, http.StatusInternalServerError, response.ErrorResponse(http.StatusInternalServerError, "Failed to retrieve student", err))
+			return
+		}
+
+		response.WriteJson(w, http.StatusOK, response.SuccessResponse(http.StatusOK, "Student retrieved successfully", student, nil))
 	}
 }
